@@ -1,0 +1,335 @@
+﻿@page "/cart"
+<nav class="navbar navbar-dark bg-dark justify-content-sm-between">
+    <h1 class="navbar-brand mb-0 h1 px-md-5">Add to Cart</h1>
+    <div class="px-md-5">
+        <button class="btn btn-warning" type="button" @onclick="OpenCartItemDialog">
+        <span class="oi oi-plus" />  Add New Items
+    </button>
+    </div>
+</nav>
+
+
+<table class="table">
+    <thead>
+        <tr>
+                        
+            <th>Name</th>
+            <th>Price</th>
+            <th>Item Category</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+             
+                @foreach (var cartItem in cartItems)
+                {
+           
+            
+                    <tr>         
+                        <td>@cartItem.Name</td>
+                        <td>@cartItem.Price</td>
+                        <td>@cartItem.ItemCategory</td>
+                        <td>
+                            <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenDisplayAddIns(cartItem)">
+                                <span class="oi oi-delete" /> View Add-Ins
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenDisplayForNewAddIns(cartItem)">
+                                <span class="oi oi-delete" /> Add Add-Ins
+                            </button>
+                                <button class="btn btn-outline-secondary" type="button" @onclick="()=>ItemRemove(cartItem)">
+                                <span class="oi oi-delete" /> Remove
+                            </button>
+                        </td>
+                    </tr>
+    
+                }        
+    </tbody>
+                <tbody>
+                     
+                </tbody>
+            </table>
+            <div class="d-flex align-items-center justify-content-center mx-auto" style="background-color:rgba(242, 207, 140, 0.5);height:80px;width:25%;border-radius:1px">
+            <div class="form-floating" style="background-color:#7e4000">
+                        <input type="text" class="form-control description"  @bind="description" placeholder="Description" />
+                        <label for="floatingInput">Description</label>
+            </div>
+            </div>
+            <div class="d-flex align-items-center justify-content-center mx-auto" style="background-color:rgba(242, 207, 140, 0.5);height:60px;width:25%;border-radius:1px">
+                <button type="button" class="btn btn-primary" @onclick=@OnOrderButton>Order</button>
+            </div>
+            
+            @if (!string.IsNullOrEmpty(orderItemErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@orderItemErrorMessage" />
+            }
+@if (!string.IsNullOrEmpty(cartAddItemSuccessMessage))
+            {
+                <AlertMessage Type="danger" Message="@cartAddItemSuccessMessage" />
+               
+            }
+@if (showItemDialog)
+{
+    <Dialog Title
+    ="Cart" OnClose
+    ="@OnAddItemDialogButton" OkLabel="Go Back" CancelButton=false>
+        <form>
+            <table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Item Category</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (items != null)
+        {
+            @foreach (var item in items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Price</td>
+                    <td>@item.ItemCategory</td>
+                    <td>
+                        <button class="btn btn-outline-secondary" type="button" @onclick="()=>AddItemToCart(item)">
+                            <span class="oi oi-delete" /> Add
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+        </form>
+    </Dialog>
+ }
+
+@if (showAddInsDialog)
+{
+    <Dialog Title="@addInsItem.Name" OnClose="@OnAddAddInsDialogClose" OkLabel="Go Back" CancelButton=false>
+        <form>
+             
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (addIns != null)
+                    {
+                        @foreach (var addIn in addIns)
+                        {
+                            <tr>
+                                <td>@addIn.Name</td>
+                                <td>@addIn.Price</td
+                                <td>
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>AddAddInToItem(addInsItem, addIn)">
+                                        <span class="oi oi-add" /> Add
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+           @if (!string.IsNullOrEmpty(itemAddInSuccessMessage))
+            {
+                <AlertMessage Type="success" Message="@itemAddInSuccessMessage" />
+                
+            }
+        </form>
+    </Dialog>
+}
+@if (showDisplayAddInsDialog)
+{
+    <Dialog Title="@itemsAddIns.Name" OnClose="@OnDisplayAddInsDialogClose" OkLabel="Go Back" CancelButton=false>
+        <form>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Qantity</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (addIns != null)
+                    {
+                        @foreach (var addIn in addInsForEachItem)
+                        {
+                            <tr>
+                                <td>@addIn.Name</td>
+                                <td>@addIn.Price</td
+                                <td>@addIn.Quantity</td>
+                                <td>@(addIn.Quantity * addIn.Price)</td>
+                                <td>
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>AddInIncrease(itemsAddIns, addIn)">
+                                        <span class="oi oi-add" /> Add
+                                    </button>
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>AddInDecrease(itemsAddIns, addIn)">
+                                        <span class="oi oi-delete" /> Decrease
+                                    </button>
+                                    <button class="btn btn-outline-danger" type="button" @onclick="()=>AddInRemove(itemsAddIns, addIn)">
+                                        <span class="oi oi-delete" /> Remove
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+            
+        </form>
+    </Dialog>
+}
+@code {
+    private List<Items> items { get; set; }
+    private bool showItemDialog { get; set; }
+    private string orderItemErrorMessage { get; set; }
+    private string cartAddItemSuccessMessage { get; set; }
+    private string itemAddInSuccessMessage { get; set; }
+    private List<Items> cartItems{ get; set; }
+    private bool showAddInsDialog { get; set; }
+    private List<Order> orders { get; set; }
+    private Items cart { get; set; }
+    private List<AddIns> addIns { get; set; }
+    private List<AddIns> addInsForEachItem { get; set; }
+    private Items addInsItem { get; set; }
+    private bool showDisplayAddInsDialog { get; set; }
+    private Items itemsAddIns { get; set; }
+    private int i = 1;
+    private int totalCartQuantity;
+    private string description { get; set; }
+
+    protected override void OnInitialized()
+    {
+
+        items = ItemServices.GetAll();
+        cartItems = OrderServices.GetAllCartItems();
+        totalCartQuantity = cartItems.Count;
+        addIns = AddInServices.GetAll();
+    }
+
+    private void AddItemToCart(Items item)
+    {
+
+        cart = OrderServices.AddToCart(item);
+        cartItems = OrderServices.GetAllCartItems();
+        totalCartQuantity = cartItems.Count;
+        if (cart != null)
+        {
+            cartAddItemSuccessMessage = "Success";
+        }
+
+    }
+
+     private void OnOrderButton()
+    {
+
+            try
+            {
+                i = 1;
+                orderItemErrorMessage = "";
+                cartItems = OrderServices.GetAllCartItems();
+                var totalPrice = OrderServices.CalculateTotalCartPrice(cartItems);
+                orders = OrderServices.Order(totalPrice,cartItems,description);
+                cartItems = OrderServices.GetAllCartItems();
+                totalCartQuantity = 0;
+                description = "";
+               
+            }
+            catch (Exception e)
+            {
+                orderItemErrorMessage = e.Message;
+            }
+        
+    }
+    private void OpenCartItemDialog()
+    {
+
+        showItemDialog = true;
+        cartItems = OrderServices.GetAllCartItems();
+        totalCartQuantity = cartItems.Count;
+    }
+    private void OnAddItemDialogButton()
+    {
+         showItemDialog = false;
+
+    }
+   
+    private void OpenDisplayForNewAddIns(Items item)
+    {
+        addInsItem = item;
+        showAddInsDialog = true;
+    }
+    private void AddAddInToItem(Items item, AddIns addIn)
+    {
+
+        addIn = OrderServices.AddAddInToCartItem(item, addIn);
+
+        if (addIn != null)
+        {
+            itemAddInSuccessMessage = "Added";
+            StartTimer();
+        }
+
+    }
+    private void OnAddAddInsDialogClose()
+    {
+                
+        showAddInsDialog = false;
+
+    }
+
+    private void OpenDisplayAddIns(Items item)
+    {
+
+        addInsForEachItem = OrderServices.GetAddInsByCarNumber(item);
+
+        itemsAddIns = item;
+        showDisplayAddInsDialog = true;
+    }
+
+    private void OnDisplayAddInsDialogClose()
+    {
+
+        showDisplayAddInsDialog = false;
+
+    }
+
+    private void ItemRemove(Items cartItem)
+    {
+
+    cartItems = OrderServices.ItemRemove(cartItem);
+    totalCartQuantity = cartItems.Count;
+    }
+    private void AddInIncrease(Items item, AddIns addIn)
+    {
+
+    addInsForEachItem = OrderServices.AddInIncrease(item, addIn);
+    }
+     private void AddInDecrease(Items item, AddIns addIn)
+    {
+
+    addInsForEachItem = OrderServices.AddInDecrease(item, addIn);
+    }
+
+    private void AddInRemove(Items item, AddIns addIn)
+    {
+
+    addInsForEachItem = OrderServices.AddInRemove(item, addIn);
+    }
+
+    private async void StartTimer()
+    {
+        await Task.Delay(200); // Adjust the duration (in milliseconds) as needed
+        itemAddInSuccessMessage = "";
+        StateHasChanged();
+    }
+}

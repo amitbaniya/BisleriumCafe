@@ -1,0 +1,156 @@
+﻿@page "/viewsales"
+
+<nav class="navbar navbar-dark bg-dark justify-content-center">
+    <h1 class="navbar-brand mb-0 h1 px-md-5">View Sales</h1>
+</nav>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Created At</th>
+            <th>Member Name</th>
+            <th>Total Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @if (sales != null)
+
+        {
+            @foreach (var sale in sales)
+
+            {
+                <tr>
+                    <td>@sale.CreatedAt.ToString("h:mm:ss tt")</td>
+                    @if (sale.Member != null)
+                    {
+                        <td>@sale.Member.Name
+                        </td>
+                    }
+                    else
+                    {
+                        <td>Normal Customer</td>
+                    }
+                    <td>@sale.TotalPrice.ToString("F2")</td>
+                    <td>
+                        <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenItemDialog(sale)">
+                            <span class="oi oi-delete" /> Items
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+@if (showItemDialog)
+{
+    <Dialog Title="Items" OnClose="@OnItemDialogClose" CancelButton=false OkLabel="Go Back">
+
+        <table class="table">
+            <thead>
+                <tr>
+
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Item Category</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var item in items)
+                {
+
+
+                    <tr>
+                        <td>@item.Name</td>
+                        <td>@item.Price</td>
+                        <td>@item.ItemCategory</td>
+                        <td>
+                            <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenAddInsDialog(item)">
+                                <span class="oi oi-delete" /> View Add-Ins
+                            </button>
+                        </td>
+                    </tr>
+
+                }
+            </tbody>
+            <tbody>
+            </tbody>
+        </table>
+   
+    </Dialog>
+}
+@if (showAddInsDialog)
+{
+    <Dialog Title="Add Ins" OnClose="@OnAddInsDialogClose" CancelButton=false OkLabel="Go Back">
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Quantity</th>
+
+            
+        </tr>
+    </thead>
+    <tbody>
+        @if (addIns != null)
+        {
+            @foreach (var addIn in addIns)
+            {
+                <tr>
+                    <td>@addIn.Name</td>
+                    <td>@addIn.Price</td>
+                    <td>@addIn.Quantity</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+   </Dialog>
+}
+@code {
+    private List<Sales> sales { get; set; }
+    private Sales saleItem{ get; set; }
+    private List<Items> items { get; set; }
+    private bool showItemDialog = false;
+
+    private bool showAddInsDialog = false;
+    private List<AddIns> addIns { get; set; }
+
+    protected override void OnInitialized()
+    {
+        sales = SaleServices.GetAll();
+        sales = sales.OrderByDescending(o => o.CreatedAt.TimeOfDay).ToList();
+
+    }
+
+    private void OpenItemDialog(Sales sale)
+    {
+
+        saleItem = sale;
+        items = sale.Items;
+        showItemDialog = true;
+    }
+
+    private void OnItemDialogClose(bool isCancel)
+    {
+        saleItem = null;
+        showItemDialog = false;
+
+    }
+    private void OpenAddInsDialog( Items item)
+    {
+        addIns = item.AddIns;        
+        showAddInsDialog = true;
+    }
+
+    private void OnAddInsDialogClose(bool isCancel)
+    {
+        saleItem = null;
+        showAddInsDialog = false;
+
+    }
+}

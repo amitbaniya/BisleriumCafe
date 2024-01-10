@@ -1,0 +1,18 @@
+﻿@page "/"
+
+@code {
+    [CascadingParameter]
+    private GlobalState globalstate { get; set; }
+
+    protected override void OnInitialized()
+    {
+        if (globalstate.CurrentUser == null)
+        {
+            NavManager.NavigateTo("/login/Hello");
+        }
+        else
+        {
+            NavManager.NavigateTo("/cart");
+        }
+    }
+}

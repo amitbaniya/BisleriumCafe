@@ -1,0 +1,91 @@
+﻿<div class="top-row ps-3 navbar navbar-dark rounded-bottom">
+    <div class="container-fluid" style="font-family:'Doppio One'">
+        <a class="navbar-brand" href="#">Bislerium Cafe</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+
+<div class='@(collapseNavMenu ? "collapse" : "")' @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        
+        
+        @if (UserRole == Role.Admin){
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageusers">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Users
+                </NavLink>
+            </div
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageitems">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Items
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageaddins">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Add-Ins
+                </NavLink>
+            </div>
+        }
+        <div class="nav-item px-3">
+                <NavLink class="nav-link" href="cart">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Cart
+                </NavLink>
+            </div>
+        <div class="nav-item px-3">
+                <NavLink class="nav-link" href="manageorders">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Manage Orders
+                </NavLink>
+            </div>
+        <div class="nav-item px-3">
+                <NavLink class="nav-link" href="managemembers">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Member Members
+                </NavLink>
+        </div>
+         <div class="nav-item px-3">
+                <NavLink class="nav-link" href="viewsales">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> View Sales
+                </NavLink>
+        </div>
+        <div class="nav-item px-3">
+                <NavLink class="nav-link" href="pdfgenerate">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Generate PDF
+                </NavLink>
+        </div>
+        <div class="nav-item px-3">
+                <NavLink class="nav-link" href="changepassword">
+                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Change passoword
+                </NavLink>
+        </div>
+        
+        
+
+            
+          
+        
+        
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link text-danger" role="button" @onclick="LogoutHandler">
+                <span class="oi oi-account-logout" /> Logout
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code{
+    [Parameter]
+    public string Username { get; set; }
+    [Parameter]
+    public Role UserRole { get; set; }
+    [Parameter]
+    public EventCallback LogoutHandler { get; set; }
+    private bool collapseNavMenu { get; set; } = true;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

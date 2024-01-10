@@ -1,0 +1,214 @@
+﻿@page "/manageaddins"
+
+<nav class="navbar navbar-dark bg-dark justify-content-sm-between">
+    <h1 class="navbar-brand mb-0 h1 px-md-5">Add Ins</h1>
+    <div class="px-md-5">
+        <button class="btn btn-warning" type="button" @onclick="OpenAddAddInDialog">
+        <span class="oi oi-plus" /> Add
+    </button>
+    </div>
+</nav>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (addIns != null)
+        {
+            @foreach (var addIn in addIns)
+            {
+                <tr>
+                    <td>@addIn.Name</td>
+                    <td>@addIn.Price</td
+                    <td>
+                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenUpdateAddInDialog(addIn)">
+                        <span class="oi oi-delete" /> Update
+                    </button>
+                
+                        <button class="btn btn-outline-danger" type="button" @onclick="()=>OpenDeleteAddInDialog(addIn)">
+                            <span class="oi oi-delete" /> Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+@if (showAddAddInDialog)
+{
+    <Dialog Title="Add Add-Ins" OnClose="@OnAddAddInDialogClose" OkLabel="Add">
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control price" @bind="price" placeholder="price" />
+                <label for="floatingInput">Price</label>
+            </div>
+            <!--<InputFile OnChange="HandleFileChange" />-->
+            @if (!string.IsNullOrEmpty(addAddInErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@addAddInErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+@if (showUpdateAddInDialog)
+{
+    <Dialog Title="Update Add-Ins" OnClose="@OnUpdateAddInDialogClose" OkLabel="Update">
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="updateAddIn.Name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control price" @bind="updateAddIn.Price" placeholder="price" />
+                <label for="floatingInput">Price</label>
+            </div>
+            
+
+            <!--<InputFile OnChange="HandleFileChange" />-->
+            @if (!string.IsNullOrEmpty(updateAddInErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@updateAddInErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+@if (showDeleteAddInDialog)
+{
+    <Dialog Title="Delete Add-Ins" OnClose="@OnDeleteAddInDialogClose" OkLabel="Confirm">
+        <p>Are you sure you want to delete <strong>@deleteAddIn.Name</strong>and its data?</p>
+        @if (!string.IsNullOrEmpty(deleteAddInErrorMessage))
+        {
+            <AlertMessage Type="danger" Message="@deleteAddInErrorMessage" />
+        }
+    </Dialog>
+}
+
+@code {
+    [CascadingParameter]
+    private GlobalState globalState { get; set; }
+    private List<AddIns> addIns { get; set; }
+    private string name { get; set; }
+    private float price { get; set; }
+    private string category { get; set; }
+    private bool showAddAddInDialog { get; set; }
+    private string addAddInErrorMessage { get; set; }
+    private IBrowserFile selectedFile;
+    private bool showDeleteAddInDialog { get; set; }
+    private string deleteAddInErrorMessage { get; set; }
+    private AddIns deleteAddIn { get; set; }
+    private bool showUpdateAddInDialog { get; set; }
+    private string updateAddInErrorMessage { get; set; }
+    private AddIns updateAddIn { get; set; }
+    protected override void OnInitialized()
+    {
+        addIns = AddInServices.GetAll();
+    }
+
+    private void OpenAddAddInDialog()
+    {
+
+        showAddAddInDialog = true;
+        name = "";
+        price = 0;
+    }
+
+    private void OnAddAddInDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showAddAddInDialog = false;
+        }
+        else
+        {
+            try
+            {
+                addAddInErrorMessage = "";
+
+                addIns = AddInServices.Create(name, price);
+                showAddAddInDialog = false;
+
+            }
+            catch (Exception e)
+            {
+                addAddInErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenUpdateAddInDialog(AddIns addIn)
+    {
+        updateAddIn = addIn;
+        showUpdateAddInDialog = true;
+
+    }
+
+    private void OnUpdateAddInDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showUpdateAddInDialog = false;
+
+            updateAddIn = null;
+        }
+        else
+        {
+            try
+            {
+                updateAddInErrorMessage = "";
+                addIns = AddInServices.Update(updateAddIn.Id, updateAddIn.Name, updateAddIn.Price);
+                showUpdateAddInDialog = false;
+
+            }
+            catch (Exception e)
+            {
+                updateAddInErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenDeleteAddInDialog(AddIns addIn)
+    {
+        deleteAddIn = addIn;
+        showDeleteAddInDialog = true;
+    }
+    private void OnDeleteAddInDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            showDeleteAddInDialog = false;
+            deleteAddIn = null;
+        }
+        else
+        {
+            try
+            {
+                deleteAddInErrorMessage = "";
+                addIns = AddInServices.Delete(deleteAddIn.Id);
+                showDeleteAddInDialog = false;
+                deleteAddIn = null;
+
+            }
+            catch (Exception e)
+            {
+                deleteAddInErrorMessage = e.Message;
+            }
+        }
+    }
+
+    private void HandleFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+}

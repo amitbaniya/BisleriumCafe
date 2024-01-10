@@ -1,0 +1,243 @@
+﻿@page "/manageitems"
+
+<nav class="navbar navbar-dark bg-dark justify-content-sm-between">
+    <h1 class="navbar-brand mb-0 h1 px-md-5">Items</h1>
+    <div class="px-md-5">
+        <button class="btn btn-warning" type="button" @onclick="OpenAddItemDialog">
+        <span class="oi oi-plus" /> Add
+    </button>
+    </div>
+</nav>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Item Category</th
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (items != null)
+        {
+            @foreach (var item in items)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Price</td>
+                    <td>@item.ItemCategory</td>
+                    <td>
+                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenUpdateItemDialog(item)">
+                        <span class="oi oi-delete" /> Update
+                    </button>
+                
+                        <button class="btn btn-outline-danger" type="button" @onclick="()=>OpenDeleteItemDialog(item)">
+                            <span class="oi oi-delete" /> Delete
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+@if (showAddItemDialog)
+{
+    <Dialog Title="Add Item" OnClose="@OnAddItemDialogClose" OkLabel="Add">
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control price" @bind="price" placeholder="price" />
+                <label for="floatingInput<ManageItems />">Price</label>
+            </div
+            <div class="form-check">
+                <input id="espressoCategory" type="radio" class="form-check-input" name="itemCategory" value="@ItemCategory.Espresso"
+                       @onchange="CategoryChangeHandler" checked="@(itemCategory ==ItemCategory.Espresso)">
+                <label class="form-check-label" for="espressoCategory">@ItemCategory.Espresso</label>
+            </div>
+            <div class="form-check">
+                <input id="icedCategory" type="radio" class="form-check-input" name="itemCategory" value="@ItemCategory.Iced"
+                       @onchange="CategoryChangeHandler" checked="@(itemCategory == ItemCategory.Iced)">
+                <label class="form-check-label" for="icedCategory">@ItemCategory.Iced</label>
+            </div>
+            <!--<InputFile OnChange="HandleFileChange" />-->
+            @if (!string.IsNullOrEmpty(addItemErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@addItemErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+@if (showUpdateItemDialog)
+{
+    <Dialog Title="Update Item" OnClose="@OnUpdateItemDialogClose" OkLabel="Update">
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="updateItem.Name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control price" @bind="updateItem.Price" placeholder="price" />
+                <label for="floatingInput">Price</label>
+            </div>
+                <div class="form-check">
+                    <input id="espressoCategory" type="radio" class="form-check-input" name="itemCategory" value="@ItemCategory.Espresso"
+                    @onchange="CategoryChangeHandler" checked="@(itemCategory ==ItemCategory.Espresso)">
+                    <label class="form-check-label" for="espressoCategory">@ItemCategory.Espresso</label>
+                </div>
+                <div class="form-check">
+                    <input id="icedCategory" type="radio" class="form-check-input" name="itemCategory" value="@ItemCategory.Iced"
+                       @onchange="CategoryChangeHandler" checked="@(itemCategory == ItemCategory.Iced)">
+                <label class="form-check-label" for="icedCategory">@ItemCategory.Iced</label>
+                </div>
+            
+
+            <!--<InputFile OnChange="HandleFileChange" />-->
+            @if (!string.IsNullOrEmpty(updateItemErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@updateItemErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+@if (showDeleteItemDialog)
+{
+    <Dialog Title="Delete Item" OnClose="@OnDeleteItemDialogClose" OkLabel="Confirm">
+        <p>Are you sure you want to delete <strong>@deleteItem.Name</strong>and its data?</p>
+        @if (!string.IsNullOrEmpty(deleteItemErrorMessage))
+        {
+            <AlertMessage Type="danger" Message="@deleteItemErrorMessage" />
+        }
+    </Dialog>
+}
+
+@code {
+    [CascadingParameter]
+    private GlobalState globalState { get; set; }
+    private List<Items> items { get; set; }
+    private bool showAddItemDialog { get; set; }
+    private string name { get; set; }
+    private float price { get; set; }
+    private string category { get; set; }
+    private ItemCategory itemCategory { get; set; }
+    private string addItemErrorMessage { get; set; }
+    private IBrowserFile selectedFile;
+    private bool showDeleteItemDialog { get; set; }
+    private string deleteItemErrorMessage { get; set; }
+    private Items deleteItem { get; set; }
+    private bool showUpdateItemDialog { get; set; }
+    private string updateItemErrorMessage { get; set; }
+    private Items updateItem { get; set; }
+    protected override void OnInitialized()
+    {
+        items = ItemServices.GetAll();
+    }
+
+    private void OpenAddItemDialog()
+    {
+
+        showAddItemDialog = true;
+        name = "";
+        price = 0;
+        itemCategory = ItemCategory.Espresso;
+    }
+
+    private void OnAddItemDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showAddItemDialog = false;
+        }
+        else
+        {
+            try
+            {
+                addItemErrorMessage = "";
+
+                items = ItemServices.Create(name, price, itemCategory);
+                showAddItemDialog = false;
+
+            }
+            catch (Exception e)
+            {
+                addItemErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenUpdateItemDialog(Items item)
+    {
+        updateItem = item;
+        showUpdateItemDialog = true;
+        itemCategory = updateItem.ItemCategory;
+
+    }
+
+    private void OnUpdateItemDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showUpdateItemDialog = false;
+
+            updateItem = null;
+        }
+        else
+        {
+            try
+            {
+                updateItemErrorMessage = "";
+                items = ItemServices.Update(updateItem.Id, updateItem.Name, updateItem.Price, itemCategory);
+                showUpdateItemDialog = false;
+
+            }
+            catch (Exception e)
+            {
+                updateItemErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenDeleteItemDialog(Items item)
+    {
+        deleteItem = item;
+        showDeleteItemDialog = true;
+    }
+    private void OnDeleteItemDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            showDeleteItemDialog = false;
+            deleteItem = null;
+        }
+        else
+        {
+            try
+            {
+                deleteItemErrorMessage = "";
+                items = ItemServices.Delete(deleteItem.Id);
+                showDeleteItemDialog = false;
+                deleteItem = null;
+
+            }
+            catch (Exception e)
+            {
+                deleteItemErrorMessage = e.Message;
+            }
+        }
+    }
+    private void CategoryChangeHandler(ChangeEventArgs e)
+    {
+        itemCategory = (ItemCategory)Enum.Parse(typeof(ItemCategory), e.Value.ToString());
+    }
+
+    private void HandleFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+}

@@ -1,0 +1,266 @@
+﻿@page "/manageusers"
+<nav class="navbar navbar-dark bg-dark justify-content-sm-between">
+    <h1 class="navbar-brand mb-0 h1 px-md-5">Users</h1>
+    <div class="px-md-5">
+        <button class="btn btn-warning" type="button" @onclick="OpenAddUserDialog">
+        <span class="oi oi-plus" /> Add
+    </button>
+    </div>
+</nav>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Created At</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in users)
+        {
+            <tr>
+                <td>@user.Username</td>
+                <td>@user.Role.ToString()</td>
+                <td>@user.CreatedAt.ToString("h:mm tt")</td>
+                <td>
+                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenUpdateUserDialog(user)">
+                        <span class="oi oi-delete" /> Update
+                    </button>
+                
+                    <button 
+                            class="btn btn-outline-danger" type="button" @onclick="()=>OpenDeleteUserDialog(user)">
+                        <span class="oi oi-delete" /> Delete
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (showAddUserDialog)
+{
+    <Dialog Title="Add User" OnClose="@OnAddUserDialogClose" OkLabel="Add">
+    <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+        <div class="form-floating">
+            <input type="text" class="form-control username" @bind="username" placeholder="Username" />
+            <label for="floatingInput">Username</label>
+        </div>
+        <div class="form-floating mb-3">
+            <input type="password" class="form-control password" @bind="password" placeholder="Password" />
+            <label for="floatingPassword">Password</label>
+        </div>
+        <div class="form-check">
+            <input id="userRole" type="radio" class="form-check-input" name="role" value="@Role.Staff"
+                @onchange="RoleChangeHandler" checked="@(role == Role.Staff)">
+            <label class="form-check-label" for="userRole">@Role.Staff</label>
+        </div>
+        <div class="form-check">
+            <input id="adminRole" type="radio" class="form-check-input" name="role" value="@Role.Admin"
+                @onchange="RoleChangeHandler" checked="@(role == Role.Admin)">
+            <label class="form-check-label" for="adminRole">@Role.Admin</label>
+        </div>
+            <!---<InputFile OnChange="HandleFileChange" />-->
+        @if (!string.IsNullOrEmpty(addUserErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@addUserErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+
+@if (showUpdateUserDialog)
+{
+    <Dialog Title="Update User" OnClose="@OnUpdateUserDialogClose" OkLabel="Update">
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="updateUser.Name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control username" @bind="updateUser.Username" placeholder="Username" />
+                <label for="floatingInput">Username</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control password" @bind="password" placeholder="password" />
+                <label for="floatingPassword">Password</label>
+            </div>
+            
+                <div class="form-check">
+                    <input id="userRole" type="radio" class="form-check-input" name="role" value="@Role.Staff"
+                           @onchange="RoleChangeHandler" checked="@(role == Role.Staff)">
+                    <label class="form-check-label" for="userRole">@Role.Staff</label>
+                </div>
+                <div class="form-check">
+                    <input id="adminRole" type="radio" class="form-check-input" name="role" value="@Role.Admin"
+                           @onchange="RoleChangeHandler" checked="@(role == Role.Admin)">
+                    <label class="form-check-label" for="adminRole">@Role.Admin</label>
+                </div>
+            
+
+            <!---<InputFile OnChange="HandleFileChange" />-->
+            @if (!string.IsNullOrEmpty(addUserErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@addUserErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+
+@if (showDeleteUserDialog)
+{
+    <Dialog Title="Delete User" OnClose="@OnDeleteUserDialogClose" OkLabel="Confirm">
+    <p>Are you sure you want to delete <strong>@deleteUser.Username</strong> user and their data?</p>
+    @if (!string.IsNullOrEmpty(deleteUserErrorMessage))
+        {
+            <AlertMessage Type="danger" Message="@deleteUserErrorMessage" />
+        }
+    </Dialog>
+}
+
+@code {
+    [CascadingParameter]
+    private GlobalState globalState { get; set; }
+    private List<Users> users { get; set; }
+    private bool showAddUserDialog { get; set; }
+    private string name { get; set; }
+    private string username { get; set; }
+    private string password { get; set; }
+    private Role role { get; set; }
+    private string addUserErrorMessage { get; set; }
+    private IBrowserFile selectedFile;
+    private bool showDeleteUserDialog{ get; set; }
+    private string deleteUserErrorMessage { get; set; }
+    private Users deleteUser { get; set; }
+    private bool showUpdateUserDialog { get; set; }
+    private string updateUserErrorMessage { get; set; }
+    private Users updateUser { get; set; }
+
+    protected override void OnInitialized()
+    {
+        CurrentUserShowDisable();
+
+    }
+
+    private void OpenAddUserDialog()
+    {
+
+        showAddUserDialog = true;
+        name = "";
+        username = "";
+        password = "";
+        role = Role.Staff;
+    }
+
+    private void OnAddUserDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showAddUserDialog = false;
+        }
+        else
+        {
+            try
+            {
+                addUserErrorMessage = "";
+                users = UserServices.Create(name, username, password, role);
+                showAddUserDialog = false;
+                CurrentUserShowDisable();
+
+            }
+            catch (Exception e)
+            {
+                addUserErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenUpdateUserDialog(Users user)
+    {
+        updateUser = user;
+        showUpdateUserDialog = true;
+        password = "";
+        role = updateUser.Role;
+
+    }
+
+    private void OnUpdateUserDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showUpdateUserDialog = false;
+
+            updateUser = null;
+        }
+        else
+        {
+            try
+            {
+                updateUserErrorMessage = "";
+                users = UserServices.Update(updateUser.Id, updateUser.Name, updateUser.Username, password, role);
+                showUpdateUserDialog = false;
+                CurrentUserShowDisable();
+
+            }
+            catch (Exception e)
+            {
+                updateUserErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenDeleteUserDialog(Users user)
+    {
+        deleteUser = user;
+        showDeleteUserDialog = true;
+    }
+    private void OnDeleteUserDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            showDeleteUserDialog = false;
+            deleteUser = null;
+        }
+        else
+        {
+            try
+            {
+                deleteUserErrorMessage = "";
+                users = UserServices.Delete(deleteUser.Id);
+                showDeleteUserDialog = false;
+                deleteUser = null;
+                CurrentUserShowDisable();
+
+            }
+            catch (Exception e)
+            {
+                deleteUserErrorMessage = e.Message;
+            }
+        }
+    }
+    private void RoleChangeHandler(ChangeEventArgs e)
+    {
+        role = (Role)Enum.Parse(typeof(Role), e.Value.ToString());
+    }
+
+    private void HandleFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.GetMultipleFiles().FirstOrDefault();
+    }
+
+    private List<Users> CurrentUserShowDisable()
+    {
+        Guid userIdToRemove = globalState.CurrentUser.Id;
+        users = UserServices.GetAll();
+        Users userToRemove = users.FirstOrDefault(user => user.Id == userIdToRemove);
+        users.Remove(userToRemove);
+
+        return users;
+    }
+}

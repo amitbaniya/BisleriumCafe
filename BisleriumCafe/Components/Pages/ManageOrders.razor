@@ -1,0 +1,499 @@
+﻿@page "/manageorders"
+<nav class="navbar navbar-dark bg-dark justify-content-sm-between">
+    <h1 class="navbar-brand mb-0 h1 px-md-5">Orders</h1>
+    <div class="px-md-5">
+        <button class="btn btn-warning" type="button" @onclick="OpenAddOrder">
+            <span class="oi oi-plus" /> Add
+        </button>
+    </div>
+</nav>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Created At</th>
+            <th>Description</th>
+            <th>Total Price</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        
+        @if (orders != null)
+
+        {
+            @foreach (var order in orders)
+
+            {
+                <tr>
+                    <td>@order.CreatedAt.ToString("h:mm:ss tt")</td>
+                    <td>@order.Description</td>
+                    <td>@order.TotalPrice</td>
+                    <td><button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenUpdateOrderDialog(order)">
+                        <span class="oi oi-delete" /> Update
+                    </button>
+                    
+                    
+                        <button class="btn btn-outline-danger" type="button" @onclick="()=>OpenCancelOrderDialog(order)">
+                            <span class="oi oi-delete" /> Delete
+                        </button>
+                    
+                        <button class="btn btn-outline-danger" type="button" @onclick="()=>OpenPayForOrderDialog(order)">
+                            <span class="oi oi-delete" /> Pay
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+
+@if (showCancelOrderDialog)
+{
+    <Dialog Title="Delete Order" OnClose="@OnCancelOrderDialogClose" OkLabel="Confirm">
+        <p>Are you sure you want to delete <strong>@cancelOrder.Description</strong> order and its data?</p>
+        @if (!string.IsNullOrEmpty(cancelOrderErrorMessage))
+        {
+            <AlertMessage Type
+            ="danger" Message
+            ="@cancelOrderErrorMessage" />
+        }
+    </Dialog>
+}
+
+@if (showPayForOrderDialog)
+{
+    <Dialog Title="Pay" OnClose="@OnPayForOrderDialogClose" OkLabel="Confirm">
+
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control membercredentials" @bind="membercredentials" placeholder="MemberCredentials" />
+                <label for="floatingInput">Members phone Number or username</label>
+            </div>
+
+            @if (!string.IsNullOrEmpty(payForOrderErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@payForOrderErrorMessage" />
+            }
+           
+        </form>
+
+       
+    </Dialog>
+}
+@if (showPaymentDetailsDialog)
+{
+    <Dialog Title="Pay" OnClose="@OnPaymentDetailsDialogClose" CancelButton=false OkLabel="Ok">
+        @if (!string.IsNullOrEmpty(redemptionMessage))
+        {
+            <AlertMessage Type="danger" Message="@redemptionMessage" />
+        }
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Total Price Before Discount</th>
+                    <th>Redemption</th>
+                    <th>Total Price After Discount and Redemption</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+
+                
+                        <tr>
+                    @if (sale.Member != null)
+                    {
+                        <td>@sale.Member.Name</td>
+                    }
+                    else{
+
+                        <td>Normal Customer</td>
+                        }
+                    <td>@previousPrice</td>
+                    @if (sale.Member != null)
+                    {
+                        <td>@sale.Member.Redemption</td>
+                    }
+                    else{
+                        <td>Not Member</td>
+                    }
+                    <td>@sale.TotalPrice</td>
+
+                        </tr>
+                
+            </tbody>
+        </table>
+
+
+    </Dialog>
+}
+@if (showUpdateOrderDialog)
+{
+    <Dialog Title="Update Order" OnClose="@OnUpdateOrderDialogClose" OkLabel="Ok">
+        <nav class="navbar navbar-dark bg-dark justify-content-sm-between">
+            <h1 class="navbar-brand mb-0 h1 px-md-5">Add to Cart</h1>
+            <div class="px-md-5">
+                <button class="btn btn-warning" type="button" @onclick="OpenCartItemDialog">
+                    <span class="oi oi-plus" />  Add New Items
+                </button>
+            </div>
+        </nav>
+
+
+        <table class="table">
+            <thead>
+                <tr>
+
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Item Category</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach (var cartItem in cartItems)
+                {
+
+
+                    <tr>
+                        <td>@cartItem.Name</td>
+                        <td>@cartItem.Price</td>
+                        <td>@cartItem.ItemCategory</td>
+                        <td>
+                            <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenDisplayAddIns(cartItem)">
+                                <span class="oi oi-delete" /> View Add-Ins
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenDisplayForNewAddIns(cartItem)">
+                                <span class="oi oi-delete" /> Add Add-Ins
+                            </button>
+                            <button class="btn btn-outline-secondary" type="button" @onclick="()=>ItemRemove(cartItem)">
+                                <span class="oi oi-delete" /> Remove
+                            </button>
+                        </td>
+                    </tr>
+
+                }
+            </tbody>
+            <tbody>
+            </tbody>
+        </table>
+        <div class="d-flex align-items-center justify-content-center mx-auto" style="background-color:rgba(242, 207, 140, 0.5);height:80px;width:40%;border-radius:1px">
+            <div class="form-floating" style="background-color:#7e4000">
+                <input type="text" class="form-control description" @bind="updateOrder.Description" placeholder="Description" />
+                <label for="floatingInput">Description</label>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(orderItemErrorMessage))
+        {
+            <AlertMessage Type="danger" Message="@orderItemErrorMessage" />
+        }
+        @if (!string.IsNullOrEmpty(cartAddItemSuccessMessage))
+        {
+            <AlertMessage Type="danger" Message="@cartAddItemSuccessMessage" />
+
+        }
+    </Dialog>
+}
+
+@if (showItemDialog)
+{
+    <Dialog Title="Cart" OnClose="@OnAddItemDialogButton" OkLabel="Go Back" CancelButton=false>
+        <form>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Item Category</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (items != null)
+                    {
+                        @foreach (var item in items)
+                        {
+                            <tr>
+                                <td>@item.Name</td>
+                                <td>@item.Price</td>
+                                <td>@item.ItemCategory</td>
+                                <td>
+                                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>AddItemToCart(item)">
+                                        <span class="oi oi-delete" /> Add
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </form>
+    </Dialog>
+}
+
+@code {
+    private List<Order> orders { get; set; }
+    private bool showCancelOrderDialog { get; set; }
+    private string cancelOrderErrorMessage { get; set; }
+    private Order cancelOrder { get; set; }
+    private bool showPayForOrderDialog { get; set; }
+    private string payForOrderErrorMessage { get; set; }
+    private Order payForOrder { get; set; }
+    private bool showUpdateOrderDialog { get; set; }
+    private string updateOrderErrorMessage { get; set; }
+    private Order updateOrder { get; set; }
+    private bool showItemDialog{ get; set; }
+    private List<Items> cartItems { get; set; }
+    private string description { get; set; }
+    private string orderItemErrorMessage { get; set; }
+    private string cartAddItemSuccessMessage { get; set; }
+    private List<Items> items { get; set; }
+    private Items cart { get; set; }
+    private Items itemsAddIns { get; set; }
+    private Items addInsItem { get; set; }
+    private bool showAddInsDialog { get; set; }
+    private string itemAddInSuccessMessage { get; set; }
+    private List<AddIns> addIns { get; set; }
+    private List<AddIns> addInsForEachItem { get; set; }
+    private bool showDisplayAddInsDialog { get; set; }
+    private Order order{ get; set; }
+    private string membercredentials { get; set; }
+    private bool redemption { get; set; } = false;
+    private string redemptionMessage{ get; set; }
+    private List<Sales> sales{ get; set; }
+    private bool showPaymentDetailsDialog{ get; set; }
+    private Sales sale { get; set; }
+    private double previousPrice{ get; set; }
+
+    protected override void OnInitialized()
+    {
+        orders = OrderServices.GetAll();
+        orders = orders.OrderByDescending(o => o.CreatedAt.TimeOfDay).ToList();
+        items = ItemServices.GetAll();
+        addIns = AddInServices.GetAll();
+        order = OrderServices.GetAllFromTemp();
+
+    }
+
+    private void OpenAddOrder()
+    {
+
+        NavManager.NavigateTo("/cart");
+    }
+
+    private void OpenCancelOrderDialog(Order order)
+    {
+        cancelOrder = order;
+        showCancelOrderDialog = true;
+    }
+    private void OnCancelOrderDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            showCancelOrderDialog = false;
+            cancelOrder = null;
+        }
+        else
+        {
+            try
+            {
+                cancelOrderErrorMessage = "";
+                orders = OrderServices.CancelOrder(cancelOrder.Id);
+                orders = orders.OrderByDescending(o => o.CreatedAt.TimeOfDay).ToList();
+                showCancelOrderDialog = false;
+                cancelOrder = null;
+
+
+            }
+            catch (Exception e)
+            {
+                cancelOrderErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenPayForOrderDialog(Order order)
+    {
+        payForOrder = order;
+        showPayForOrderDialog = true;
+    }
+    private void OnPayForOrderDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            showPayForOrderDialog = false;
+            payForOrder = null;
+        }
+        else
+        {
+            try
+            {
+                payForOrderErrorMessage = "";
+                previousPrice = payForOrder.TotalPrice;
+                redemption = OrderServices.PayForOrder(payForOrder, payForOrder.TotalPrice,membercredentials);
+                
+                if (redemption == true)
+                {
+                    redemptionMessage = "You got a free coffee";
+                }
+
+                orders = OrderServices.GetAll();
+                orders = orders.OrderByDescending(o => o.CreatedAt.TimeOfDay).ToList();
+                showPayForOrderDialog = false;
+               
+                sales = SaleServices.GetAll();
+                sale = sales.OrderByDescending(o => o.CreatedAt.TimeOfDay).FirstOrDefault();
+                showPaymentDetailsDialog = true;
+                
+
+
+            }
+            catch (Exception e)
+            {
+                payForOrderErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OnPaymentDetailsDialogClose(bool isCancel)
+    {
+        showPaymentDetailsDialog = false;
+    }
+
+    private void OpenUpdateOrderDialog(Order order)
+    {
+        updateOrder = order;
+        showUpdateOrderDialog = true;
+        OrderServices.ToBeUpdated(order);
+        //NavManager.NavigateTo("/updateorder/");
+        cartItems = OrderServices.GetOrderItems(order);
+
+    }
+    private void OnUpdateOrderDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            showUpdateOrderDialog = false;
+            updateOrder = null;
+        }
+        else
+        {
+            try
+            {
+                cancelOrderErrorMessage = "";
+                orders = OrderServices.GetAll();
+                orders = orders.OrderByDescending(o => o.CreatedAt.TimeOfDay).ToList();
+                showCancelOrderDialog = false;
+                updateOrder = null;
+
+
+            }
+            catch (Exception e)
+            {
+                updateOrderErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenCartItemDialog()
+    {
+        Order order = OrderServices.GetAllFromTemp();
+        showItemDialog = true;
+        cartItems = OrderServices.GetOrderItems(order);
+
+    }
+    private void AddItemToCart(Items item)
+    {
+        Order order = OrderServices.GetAllFromTemp();
+
+        //cart = OrderServices.AddToPreviousOrder(item, order);
+        cartItems = OrderServices.GetOrderItems(order);
+
+        if (cart != null)
+        {
+            cartAddItemSuccessMessage = "Success";
+        }
+
+    }
+    
+    private void OnAddItemDialogButton()
+    {
+        showItemDialog = false;
+
+    }
+
+    private void OpenDisplayForNewAddIns(Items item)
+    {
+        addInsItem = item;
+        showAddInsDialog = true;
+    }
+    private void AddAddInToItem(Items item, AddIns addIn)
+    {
+
+        addIn = OrderServices.AddAddInToCartItem(item, addIn);
+
+        if (addIn != null)
+        {
+            itemAddInSuccessMessage = "Added";
+            StartTimer();
+        }
+
+    }
+    private void OnAddAddInsDialogClose()
+    {
+
+        showAddInsDialog = false;
+
+    }
+
+    private void OpenDisplayAddIns(Items item)
+    {
+
+        addInsForEachItem = OrderServices.GetAddInsByCarNumber(item);
+
+        itemsAddIns = item;
+        showDisplayAddInsDialog = true;
+    }
+
+    private void OnDisplayAddInsDialogClose()
+    {
+
+        showDisplayAddInsDialog = false;
+
+    }
+
+    private void ItemRemove(Items cartItem)
+    {
+
+        cartItems = OrderServices.ItemRemove(cartItem);
+        
+    }
+    private void AddInIncrease(Items item, AddIns addIn)
+    {
+
+        addInsForEachItem = OrderServices.AddInIncrease(item, addIn);
+    }
+    private void AddInDecrease(Items item, AddIns addIn)
+    {
+
+        addInsForEachItem = OrderServices.AddInDecrease(item, addIn);
+    }
+
+    private void AddInRemove(Items item, AddIns addIn)
+    {
+
+        addInsForEachItem = OrderServices.AddInRemove(item, addIn);
+    }
+
+    private async void StartTimer()
+    {
+        await Task.Delay(200); // Adjust the duration (in milliseconds) as needed
+        itemAddInSuccessMessage = "";
+        StateHasChanged();
+    }
+}

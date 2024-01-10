@@ -1,0 +1,23 @@
+﻿.table {
+    color: #290e00;
+    background-color: #f2cf8c;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans';
+}
+
+.nav {
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans';
+    
+}
+
+.form-login .username {
+    margin-bottom: -1px;
+    color: white;
+    background: #7e4000;
+}
+
+.form-login .password {
+    margin-bottom: 10px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    background: #7e4000;
+}

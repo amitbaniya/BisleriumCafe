@@ -1,0 +1,38 @@
+﻿
+.login-body {
+    display: flex;
+    align-items: center;
+    padding-top: 40px;
+    padding-bottom: 40px;
+    height: calc(100vh - 150px);
+    border-color: red;
+}
+
+.form-login {
+    width: 100%;
+    max-width: 330px;
+    padding: 15px;
+    margin: auto;
+    
+}
+h1 {
+    color: #ee6084;
+}
+    .form-login .form-floating:focus-within {
+        z-index: 2;
+    }
+label {
+    color: #f2cf8c;
+}
+.form-login .username {
+    margin-bottom: -1px;
+    color:white;
+    background: #7e4000;
+}
+
+.form-login .password {
+    margin-bottom: 10px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    background: #7e4000;
+}

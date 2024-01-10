@@ -1,0 +1,53 @@
+﻿<div class="modal fade show" style="display:block; background-color: rgba(10,10,10,.8);"
+     role="dialog">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="background-color:#290e00; color:#00bec3">
+            <div class="modal-header">
+                <h4 class="modal-title">@Title</h4>
+            </div>
+            <div class="modal-body">
+                @ChildContent
+            </div>
+            <div class="modal-footer" style="background-color:#f2cf8c">
+                @if (CancelButton) {
+                    <button type="button" class="btn" @onclick="@ModalCancel">Cancel</button>
+                }
+                @if (GoBackButton)
+                {
+                    <button type="button" class="btn" @onclick="@ModalCancel">Go Back</button>
+                }
+
+                <button type="button" class="btn btn-primary" @onclick=@ModalOk>@OkLabel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public string OkLabel { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnClose { get; set; }
+
+    [Parameter]
+    public bool CancelButton { get; set; } = true;
+
+    [Parameter]
+    public bool GoBackButton { get; set; } = false;
+
+    private Task ModalCancel()
+    {
+        return OnClose.InvokeAsync(true);
+    }
+
+    private Task ModalOk()
+    {
+        return OnClose.InvokeAsync(false);
+    }
+}

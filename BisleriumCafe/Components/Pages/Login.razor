@@ -1,0 +1,87 @@
+﻿@page "/login/{loginMessage}"
+<div class="login-body">
+    <div class="form-login">
+        <form class="text-center" @onsubmit="LoginHandler">
+            <img class="mb-4" src="/appicon.png" alt="" height="72">
+            <h1 class="h3 mb-3 fw-normal">Please Login</h1>
+            @if (showDefaultCredentials)
+            {
+                <div class="alert alert-info" role="alert">
+                    Username: <strong>@UserServices.SeedUsername</strong><br />
+                    Password: <strong>@UserServices.SeedPassword</strong>
+                </div>
+            }
+            @if (loginMessage == "The password has been changed successfully.")
+            {
+                <div class="alert alert-info" role="alert">
+                    @loginMessage
+
+                </div>
+            }
+
+            <div class="form-floating">
+                <input type="text" class="form-control username" @bind="username" placeholder="Username" />
+                <label for="floatingInput">Username</label>
+            </div>
+            <div class="form-floating mb-3">
+                <input type="password" class="form-control password" @bind="password" placeholder="Password" />
+                <label for="floatingPassword">Password</label>
+            </div>
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <AlertMessage Type="danger" Message="@errorMessage" />
+            }
+            
+            <button class="w-100 btn btn-lg btn-primary" type="submit">
+                <span class="oi oi-account-login"></span> Login
+            </button>
+        </form>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private GlobalState globalState { get; set; }
+    private bool _showDefaultCredentials { get; set; }
+    private string username { get; set; }
+    private string password { get; set; }
+    private string errorMessage = "";
+    private bool showDefaultCredentials { get; set; }
+    [Parameter]
+    public string loginMessage { get; set; }
+    
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            var user = UserServices.Login(UserServices.SeedUsername, UserServices.SeedPassword);
+            showDefaultCredentials = user.HasInitialPassword;
+        }
+        catch{}
+
+        globalState.CurrentUser = null;
+
+    }
+
+
+    private void LoginHandler()
+    {
+        try
+        {
+            errorMessage = "";
+            globalState.CurrentUser = UserServices.Login(username, password);
+            if (globalState.CurrentUser != null)
+            {
+                NavManager.NavigateTo(globalState.CurrentUser.HasInitialPassword ? "/changepassword":"/");
+            }
+        }
+        catch(Exception ex)
+        {
+
+            errorMessage = ex.Message;
+
+        }
+
+    }
+}

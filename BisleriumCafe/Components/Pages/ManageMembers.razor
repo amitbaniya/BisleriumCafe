@@ -1,0 +1,250 @@
+﻿@page "/managemembers"
+<nav class="navbar navbar-dark bg-dark justify-content-sm-between">
+    <h1 class="navbar-brand mb-0 h1 px-md-5">Members</h1>
+    <div class="px-md-5">
+        <button class="btn btn-warning" type="button" @onclick="OpenAddMemberDialog">
+            <span class="oi oi-plus" /> Add
+        </button>
+    </div>
+</nav>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Username</th>
+            <th>Phone Number</th>
+            <th>DiscountPercent</th>
+            
+           
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var member in members)
+        {
+            <tr>
+                <td>@member.Name</td>
+                <td>@member.Username</td>
+                <td>@member.PhoneNumber</td>
+                <td>@member.DiscountPercent</td>
+               
+                
+                <td>
+                    <button class="btn btn-outline-secondary" type="button" @onclick="()=>OpenUpdateMemberDialog(member)">
+                        <span class="oi oi-delete" /> Update
+                    </button>
+
+                    <button class="btn btn-outline-danger" type="button" @onclick="()=>OpenDeleteMemberDialog(member)">
+                        <span class="oi oi-delete" /> Delete
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+@if (showAddMemberDialog)
+{
+    <Dialog Title="Add Member" OnClose="@OnAddMemberDialogClose" OkLabel="Add">
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control username" @bind="username" placeholder="Username" />
+                <label for="floatingInput">Username</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control phoneNumber" @bind="phoneNumber" placeholder="Phone Number" />
+                <label for="floatingInput">Phone Number</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control discount" @bind="discount" placeholder="Discount" />
+                <label for="floatingInput">Discount</label>
+            </div>
+
+            
+            
+            <!---<InputFile OnChange="HandleFileChange" />-->
+            @if (!string.IsNullOrEmpty(addMemberErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@addMemberErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+
+@if (showUpdateMemberDialog)
+{
+    <Dialog Title="Update Member" OnClose="@OnUpdateMemberDialogClose" OkLabel="Update">
+        <form>
+            <div class="form-floating">
+                <input type="text" class="form-control name" @bind="updateMember.Name" placeholder="Name" />
+                <label for="floatingInput">Name</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control username" @bind="updateMember.Username" placeholder="Username" />
+                <label for="floatingInput">Username</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control phoneNumber" @bind="updateMember.PhoneNumber" placeholder="Phone Number" />
+                <label for="floatingInput">Phone Number</label>
+            </div>
+            <div class="form-floating">
+                <input type="text" class="form-control discount" @bind="updateMember.DiscountPercent" placeholder="Discount" />
+                <label for="floatingInput">Discount</label>
+            </div>
+
+
+
+            <!---<InputFile OnChange="HandleFileChange" />-->
+            @if (!string.IsNullOrEmpty(addMemberErrorMessage))
+            {
+                <AlertMessage Type="danger" Message="@addMemberErrorMessage" />
+            }
+        </form>
+    </Dialog>
+}
+
+@if (showDeleteMemberDialog)
+{
+    <Dialog Title="Delete Member" OnClose="@OnDeleteMemberDialogClose" OkLabel="Confirm">
+        <p>Are you sure you want to delete <strong>@deleteMember.Username</strong> member and their data?</p>
+        @if (!string.IsNullOrEmpty(deleteMemberErrorMessage))
+        {
+            <AlertMessage Type="danger" Message="@deleteMemberErrorMessage" />
+        }
+    </Dialog>
+}
+
+@code {
+    [CascadingParameter]
+    private GlobalState globalState { get; set; }
+    private List<Members> members { get; set; }
+    private bool showAddMemberDialog { get; set; }
+    private string name { get; set; }
+    private string username { get; set; }
+    private string phoneNumber { get; set; }
+    private float discount { get; set; }
+    private string addMemberErrorMessage { get; set; }
+    private IBrowserFile selectedFile;
+    private bool showDeleteMemberDialog { get; set; }
+    private string deleteMemberErrorMessage { get; set; }
+    private Members deleteMember { get; set; }
+    private bool showUpdateMemberDialog { get; set; }
+    private string updateMemberErrorMessage { get; set; }
+    private Members updateMember { get; set; }
+
+    protected override void OnInitialized()
+    {
+        members = MemberServices.GetAll();
+
+    }
+
+    private void OpenAddMemberDialog()
+    {
+
+        showAddMemberDialog = true;
+        name = "";
+        username = "";
+        phoneNumber = "";
+        discount = 0 ;
+    }
+
+    private void OnAddMemberDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showAddMemberDialog = false;
+        }
+        else
+        {
+            try
+            {
+                addMemberErrorMessage = "";
+                members = MemberServices.Create(name, username, phoneNumber, discount);
+                showAddMemberDialog = false;
+                
+
+            }
+            catch (Exception e)
+            {
+                addMemberErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenUpdateMemberDialog(Members member)
+    {
+        updateMember = member;
+        showUpdateMemberDialog = true;
+        
+
+    }
+
+    private void OnUpdateMemberDialogClose(bool isCancel)
+    {
+
+        if (isCancel)
+        {
+
+            showUpdateMemberDialog = false;
+
+            updateMember = null;
+        }
+        else
+        {
+            try
+            {
+                updateMemberErrorMessage = "";
+                members = MemberServices.Update(updateMember.Id, updateMember.Name, updateMember.Username, updateMember.PhoneNumber, updateMember.DiscountPercent);
+                showUpdateMemberDialog = false;
+                
+
+            }
+            catch (Exception e)
+            {
+                updateMemberErrorMessage = e.Message;
+            }
+        }
+    }
+    private void OpenDeleteMemberDialog(Members member)
+    {
+        deleteMember = member;
+        showDeleteMemberDialog = true;
+    }
+    private void OnDeleteMemberDialogClose(bool isCancel)
+    {
+        if (isCancel)
+        {
+
+            showDeleteMemberDialog = false;
+            deleteMember = null;
+        }
+        else
+        {
+            try
+            {
+                deleteMemberErrorMessage = "";
+                members = MemberServices.Delete(deleteMember.Id);
+                showDeleteMemberDialog = false;
+                deleteMember = null;
+                
+
+            }
+            catch (Exception e)
+            {
+                deleteMemberErrorMessage = e.Message;
+            }
+        }
+    }
+   
+
+    private void HandleFileChange(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.GetMultipleFiles().FirstOrDefault();
+    }
+
+    
+}

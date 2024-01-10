@@ -1,0 +1,211 @@
+﻿@page "/pdfgenerate"
+<div class="mb-3">
+    <button class="btn btn-warning" type="button" @onclick="OpenGenerateDailyPDFDialog">
+        <span class="oi oi-plus" /> Generate Daily PDF
+    </button>
+    <button class="btn btn-warning" type="button" @onclick="OpenGenerateMonthltyPDFDialog">
+        <span class="oi oi-plus" /> Generate Monthly PDF
+    </button>
+   
+</div>
+@if (!string.IsNullOrEmpty(pdfGenerationMessage))
+            {
+    <AlertMessage Type="danger" Message="@pdfGenerationMessage" />
+            }
+        
+@if (showDailyRevenueDialog)
+{
+    
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Revenue</th>
+                    
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var revenue in dailyRevenue)
+                {
+                    <tr>
+                        <td>@revenue.Date</td>
+                        <td>@revenue.TotalRevenue</td>
+
+                    </tr>
+                }
+            </tbody>
+        </table>
+    <button class="btn btn-warning" type="button" @onclick="OnGeneratePDFDaily">
+            <span class="oi oi-plus" /> Generate
+        </button>
+}
+@if (showMonthlyRevenueDialog)
+{
+    <label for="monthSelect" class="mr-2">Select Month:</label>
+    <select class="form-control" @bind="selectedMonth" @oninput="OnChangeMonth">
+        @foreach (var month in uniqueMonths)
+        {
+            <option value="@month">@month</option>
+        }
+    </select>
+    <div class="heading">
+    <div>Total Revenue for @selectedMonth is @monthlyRevenue.ToString("F2")</div>
+    <h3>Top Five Coffees</h3>
+    </div>
+    <table class="table">
+        
+        
+        <thead>
+            <tr>
+                <th>Coffee</th>
+                <th>Total Quantity Sold</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in fiveItems)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Quantity</td>
+
+                </tr>
+            }
+        </tbody>
+        
+    </table>
+    <table class="table">
+
+
+        <thead>
+            <tr>
+                <th>Coffee</th>
+                <th>Total Quantity Sold</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in fiveAddIns)
+            {
+                <tr>
+                    <td>@item.AddInName</td>
+                    <td>@item.Quantity</td>
+
+                </tr>
+            }
+        </tbody>
+
+    </table>
+    <button class="btn btn-warning" type="button" @onclick="OnGeneratePDFMonthlty">
+        <span class="oi oi-plus" /> Generate
+    </button>
+   
+}
+
+@code {
+
+    private List<Sales> sales { get; set; }
+    private bool showDailyRevenueDialog { get; set; } = false;
+    private bool showMonthlyRevenueDialog { get; set; } = false;
+    private List<DailyRevenue> dailyRevenue { get; set; }
+    private string pdfGenerationMessage{ get; set; }
+    private List<string> uniqueMonths { get; set; } = new List<string>();
+    private string selectedMonth { get; set; }
+    private double monthlyRevenue{ get; set; }
+    private List<FiveItems> fiveItems { get; set; }
+    private List<FiveAddIns> fiveAddIns { get; set; }
+    protected override void OnInitialized()
+    {
+        sales = SaleServices.GetAll();
+
+    }
+
+
+    private void OpenGenerateDailyPDFDialog()
+    {
+        showDailyRevenueDialog = true;
+        dailyRevenue = SaleServices.GetDailyRevenue(sales);
+    }
+
+    private void OnGeneratePDFDaily()
+    {
+
+        pdfGenerationMessage = "PDF Generated";
+        dailyRevenue = SaleServices.GetDailyRevenue(sales);
+        GeneratePDF();
+        showDailyRevenueDialog = false;
+
+    }
+    private void GeneratePDF()
+    {
+        sales = SaleServices.GetAll();
+        dailyRevenue = SaleServices.GetDailyRevenue(sales);
+        PDFServices.DailyPDF(dailyRevenue);
+    }
+
+    private void OpenGenerateMonthltyPDFDialog()
+    {
+        sales = SaleServices.GetAll();
+
+        // Extract unique month names from the sales data
+        uniqueMonths = sales
+            .Select(s => s.CreatedAt.ToString("MMMM"))
+            .Distinct()
+            .ToList();
+
+        selectedMonth = uniqueMonths.FirstOrDefault();
+
+        monthlyRevenue = SaleServices.GetMonthlyRevenue(sales, selectedMonth);
+        fiveItems = sales
+    .SelectMany(s => s.Items)
+    .GroupBy(item => item.Name)
+    .Select(group => new FiveItems
+        {
+            Name = group.Key,
+            Quantity = group.Count()
+        })
+    .OrderByDescending(item => item.Quantity)
+    .Take(5)
+    .ToList();
+
+        fiveAddIns = sales
+        .SelectMany(s => s.Items.SelectMany(i => i.AddIns))
+        .GroupBy(addIn => addIn.Name)
+        .Select(group => new FiveAddIns
+            {
+                AddInName = group.Key,
+                Quantity = group.Count()
+            })
+        .OrderByDescending(addIn => addIn.Quantity)
+        .Take(5)
+        .ToList();
+
+
+        showMonthlyRevenueDialog = true;
+
+    }
+
+    private void OnGeneratePDFMonthlty()
+    {
+
+        pdfGenerationMessage = "PDF Generated";
+       
+        GenerateMonthlyPDF(selectedMonth, monthlyRevenue, fiveItems, fiveAddIns);
+        showDailyRevenueDialog = false;
+
+    }
+
+    private void GenerateMonthlyPDF(string selectedMonth, double monthlyRevenue, List<FiveItems> fiveItems, List<FiveAddIns> fiveAddIns)
+    {
+        
+        
+        PDFServices.MonthlyPDF(selectedMonth, monthlyRevenue,fiveItems,fiveAddIns);
+    }
+    private void OnChangeMonth(ChangeEventArgs args)
+    {
+        // Update the selectedMonth value when the user changes the month
+        selectedMonth = args.Value.ToString();
+    }
+
+
+}
